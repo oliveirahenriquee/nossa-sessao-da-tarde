@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineLibrary | Cinema Virtual Compartilhado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header id="main-header">
+        <div class="header-container">
+            <a href="#" class="logo" onclick="resetApp(event)">
+                <i class="fa-solid fa-film"></i>
+                Cine<span>Library</span>
+            </a>
+            <div class="header-actions">
+                <button class="btn-roulette" onclick="startMovieRoulette()" title="Sortear um filme da lista Quero Ver">
+                    <i class="fa-solid fa-dice"></i> <span>O que assistir?</span>
+                </button>
+                <button class="btn-primary" onclick="openAddMovieModal()">
+                    <i class="fa-solid fa-plus"></i> <span>Adicionar Filme</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero" id="hero-section">
+        <img src="" class="hero-banner" id="hero-bg" alt="Banner em Destaque">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-star"></i> Em Destaque</div>
+            <h1 class="hero-title" id="hero-title">Carregando...</h1>
+            <div class="hero-meta">
+                <span id="hero-year"><i class="fa-regular fa-calendar"></i> ----</span>
+                <span id="hero-score"><i class="fa-solid fa-star"></i> --/100</span>
+                <span id="hero-duration"><i class="fa-regular fa-clock"></i> -- min</span>
+            </div>
+            <p class="hero-desc" id="hero-desc">Buscando dados na nuvem...</p>
+        </div>
+    </section>
+
+    <section class="controls-section">
+        <div class="controls-card">
+            <div class="search-row">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" placeholder="Pesquisar filme por título no catálogo...">
+                </div>
+                
+                <select id="sort-select" class="filter-select">
+                    <option value="popularity">Mais Relevantes</option>
+                    <option value="user-rating">Nossa Avaliação</option>
+                    <option value="rating-desc">Melhor Nota TMDB</option>
+                    <option value="rating-asc">Menor Nota TMDB</option>
+                    <option value="year-desc">Novos Lançamentos</option>
+                    <option value="year-asc">Clássicos Antigos</option>
+                </select>
+
+                <select id="director-select" class="filter-select">
+                    <option value="all">Todos os Diretores</option>
+                </select>
+            </div>
+
+            <div class="quick-pills">
+                <span class="pill-label">Minha Biblioteca:</span>
+                <div class="pill active" id="pill-all" onclick="setQuickFilter('all')">Todos</div>
+                <div class="pill" id="pill-watchlist" onclick="setQuickFilter('watchlist')"><i class="fa-solid fa-bookmark"></i> Quero Ver</div>
+                <div class="pill" id="pill-watched" onclick="setQuickFilter('watched')"><i class="fa-solid fa-check"></i> Já Assistidos</div>
+                
+                <span class="pill-label" style="margin-left: 10px;">Filtros:</span>
+                <div class="pill" id="pill-favorites" onclick="setQuickFilter('favorites')"><i class="fa-solid fa-heart"></i> Nossos Favoritos (4+ ★)</div>
+                <div class="pill" id="pill-masterpiece" onclick="setQuickFilter('masterpiece')"><i class="fa-solid fa-star"></i> Nota > 80</div>
+                <div class="pill" id="pill-recent" onclick="setQuickFilter('recent')"><i class="fa-solid fa-fire"></i> Anos 2020+</div>
+                <div class="pill" id="pill-classic" onclick="setQuickFilter('classic')"><i class="fa-solid fa-clock-rotate-left"></i> Clássicos (&lt; 2000)</div>
+            </div>
+        </div>
+    </section>
+
+    <main>
+        <div class="results-info">
+            <span id="results-count">Sincronizando com a nuvem...</span>
+            <button class="btn-select-mode" id="btn-toggle-select" onclick="toggleSelectionMode()">
+                <i class="fa-regular fa-square-check"></i> Selecionar Vários
+            </button>
+        </div>
+        
+        <div class="movies-grid" id="movies-grid">
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
+        </div>
+    </main>
+
+    <!-- Barra Flutuante de Ações em Lote -->
+    <div class="bulk-action-bar" id="bulk-action-bar">
+        <div class="bulk-info">
+            <span id="bulk-selected-count">0</span> selecionado(s)
+            <button class="btn-text-link" onclick="selectAllFiltered()">Selecionar todos</button>
+        </div>
+        <div class="bulk-buttons">
+            <button class="btn-bulk" onclick="bulkSetStatus('watchlist')" title="Marcar como Quero Ver">
+                <i class="fa-solid fa-bookmark"></i> <span>Quero Ver</span>
+            </button>
+            <button class="btn-bulk btn-bulk-watched" onclick="bulkSetStatus('watched')" title="Marcar como Assistido">
+                <i class="fa-solid fa-check"></i> <span>Visto</span>
+            </button>
+            <button class="btn-bulk" onclick="bulkSetStatus(null)" title="Limpar Status">
+                <i class="fa-solid fa-eraser"></i> <span>Limpar</span>
+            </button>
+            <button class="btn-bulk btn-bulk-delete" onclick="bulkDeleteMovies()" title="Remover Selecionados">
+                <i class="fa-solid fa-trash"></i> <span>Excluir</span>
+            </button>
+            <button class="btn-bulk-close" onclick="toggleSelectionMode()" title="Cancelar Seleção">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Roleta de Sorteio -->
+    <div class="modal-overlay" id="roulette-overlay">
+        <div class="roulette-box">
+            <div class="roulette-icon"><i class="fa-solid fa-film fa-spin"></i></div>
+            <p class="roulette-subtitle">Sorteando o filme da sessão...</p>
+            <h2 class="roulette-title" id="roulette-title">Preparando...</h2>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes do Filme -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnOverlay(event)">
+        <div class="modal-container">
+            <button class="close-btn" onclick="closeModal()" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-banner-wrapper">
+                <img src="" class="modal-banner" id="modal-banner-img" alt="Banner do Filme">
+                <div class="modal-banner-overlay"></div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-left-col">
+                    <img src="" class="modal-poster" id="modal-poster-img" alt="Poster do Filme">
+                    
+                    <!-- Onde Assistir (Watch Providers BR) -->
+                    <div class="providers-section" id="modal-providers-section">
+                        <span class="providers-label"><i class="fa-solid fa-tv"></i> Onde Assistir (BR)</span>
+                        <div class="providers-list" id="modal-providers-list">
+                            <span class="provider-empty">Buscando plataformas...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-details">
+                    <h2 id="modal-title">Título do Filme</h2>
+                    <div class="japanese-title" id="modal-japanese-title">Diretor</div>
+                    
+                    <div class="modal-badges">
+                        <span class="badge badge-score" id="modal-score">⭐ --</span>
+                        <span class="badge" id="modal-year">📅 --</span>
+                        <span class="badge" id="modal-duration">⏱️ -- min</span>
+                    </div>
+
+                    <p class="modal-synopsis" id="modal-synopsis-text">Sinopse...</p>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Diretor</span>
+                            <span class="value" id="modal-director">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Produtor</span>
+                            <span class="value" id="modal-producer">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Avaliação Pessoal e Comentários Compartilhados -->
+                    <div class="shared-review-box">
+                        <div class="review-header">
+                            <span class="label"><i class="fa-solid fa-heart"></i> Nossa Avaliação</span>
+                            <div class="star-rating" id="modal-star-rating">
+                                <i class="fa-regular fa-star" data-value="1" onclick="setPersonalRating(1)"></i>
+                                <i class="fa-regular fa-star" data-value="2" onclick="setPersonalRating(2)"></i>
+                                <i class="fa-regular fa-star" data-value="3" onclick="setPersonalRating(3)"></i>
+                                <i class="fa-regular fa-star" data-value="4" onclick="setPersonalRating(4)"></i>
+                                <i class="fa-regular fa-star" data-value="5" onclick="setPersonalRating(5)"></i>
+                            </div>
+                        </div>
+                        <div class="review-comment-area">
+                            <textarea id="modal-personal-notes" rows="2" placeholder="Escreva o que acharam do filme, citações ou reações..."></textarea>
+                            <button class="btn-save-notes" id="btn-save-notes" onclick="savePersonalNotes()">
+                                <i class="fa-solid fa-floppy-disk"></i> Salvar Anotação
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="modal-delete-container" style="margin-top: 20px; display: flex; justify-content: flex-end;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar Filme -->
+    <div class="modal-overlay" id="add-modal-overlay" onclick="closeAddModalOnOverlay(event)">
+        <div class="modal-container add-modal-container">
+            <button class="close-btn" onclick="closeAddMovieModal()" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            <div class="add-modal-content">
+                <h2 style="font-family: var(--font-display); margin-bottom: 8px;">Adicionar Novo Filme</h2>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
+                    Pesquise qualquer filme no TMDB para autopreencher dados e plataformas de streaming.
+                </p>
+
+                <div class="tmdb-search-box">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="tmdb-search-input" placeholder="Buscar filme no TMDB (Ex: Interestelar)..." autocomplete="off">
+                    </div>
+                    <div id="tmdb-autocomplete-list" class="tmdb-results-dropdown"></div>
+                </div>
+
+                <div class="form-divider">
+                    <span>OU PREENCHA MANUALMENTE</span>
+                </div>
+
+                <form id="add-movie-form" onsubmit="handleAddNewMovie(event)">
+                    <input type="hidden" id="form-tmdb-id">
+                    <div class="form-group">
+                        <label for="form-title">Título do Filme *</label>
+                        <input type="text" id="form-title" required placeholder="Ex: Interestelar">
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="form-year">Ano de Lançamento *</label>
+                            <input type="number" id="form-year" required placeholder="Ex: 2014">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-duration">Duração (minutos) *</label>
+                            <input type="number" id="form-duration" required placeholder="Ex: 169">
+                        </div>
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="form-director">Diretor *</label>
+                            <input type="text" id="form-director" required placeholder="Ex: Christopher Nolan">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-score">Nota (0 a 100) *</label>
+                            <input type="number" id="form-score" min="0" max="100" required placeholder="Ex: 87">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-poster">URL da Imagem do Pôster *</label>
+                        <input type="url" id="form-poster" required placeholder="https://image.tmdb.org/...">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-banner">URL da Imagem do Banner (Opcional)</label>
+                        <input type="url" id="form-banner" placeholder="https://image.tmdb.org/...">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-desc">Sinopse *</label>
+                        <textarea id="form-desc" rows="3" required placeholder="Descreva a história do filme..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeAddMovieModal()">Cancelar</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-movie">Salvar no Catálogo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container de Notificações Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- SDKs do Firebase v9 Compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
